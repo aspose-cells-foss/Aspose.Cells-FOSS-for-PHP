@@ -503,6 +503,9 @@ final class XlsxWorkbookSerializer
                 $workbookModel = new WorkbookModel();
                 $workbookModel->Worksheets = array();
                 $workbookModel->DefaultStyle = $stylesheet->DefaultCellStyle->Clone();
+                $workbookModel->RawTableStylesXml = $stylesheet->RawTableStylesXml;
+                $workbookModel->TableDifferentialStyles = array_merge($workbookModel->TableDifferentialStyles, $stylesheet->DifferentialFormats);
+                $workbookModel->RawTableDifferentialStylesXml = array_merge($workbookModel->RawTableDifferentialStylesXml, $stylesheet->RawDifferentialFormatsXml);
 
                 $workbookRoot = $workbookDocument->Root;
                 if ($workbookRoot === null) {

@@ -51,6 +51,7 @@ final class XlsxWorkbookWorksheetLoader
         XlsxWorkbookAutoFilter::LoadAutoFilter($worksheetModel, $worksheetRoot, $stylesheet, $diagnostics, $options, $sheetName);
         self::LoadColumns($worksheetModel, $worksheetRoot, $stylesheet, $diagnostics, $options, $sheetName);
         XlsxWorkbookPageSetup::LoadWorksheetPageSetup($worksheetModel, $worksheetRoot, $diagnostics, $options, $sheetName);
+        XlsxWorkbookPrinterSettings::Load($worksheetModel->PageSetup, $worksheetRoot, $archive, $worksheetUri, $diagnostics, $options, $sheetName);
         XlsxWorkbookHyperlinks::LoadHyperlinks($worksheetModel, $worksheetRoot, $worksheetHyperlinkTargets, $diagnostics, $options, $sheetName);
         XlsxWorkbookConditionalFormatting::LoadConditionalFormattings($worksheetModel, $worksheetRoot, $stylesheet, $diagnostics, $options, $sheetName);
         XlsxWorkbookValidations::LoadValidations($worksheetModel, $worksheetRoot, $diagnostics, $options, $sheetName);

@@ -2,6 +2,8 @@
 
 namespace Aspose\Cells_FOSS;
 
+use Aspose\Cells_FOSS\Core\DateSerialConverter;
+use Aspose\Cells_FOSS\Core\DateSystem;
 use Aspose\Cells_FOSS\Core\StyleValue;
 
 final class DisplayTextFormatter
@@ -43,7 +45,7 @@ final class DisplayTextFormatter
         return (string) $value;
     }
 
-    public static function FormatDisplayValue($value, StyleValue $style, $workbookCulture)
+    public static function FormatDisplayValue($value, StyleValue $style, $workbookCulture, $dateSystem = DateSystem::Windows1900)
     {
         if ($value === null) {
             return '';
@@ -58,7 +60,7 @@ final class DisplayTextFormatter
         }
 
         if ($value instanceof \DateTime) {
-            return self::FormatDateTimeValue($value, $style, $workbookCulture);
+            return self::FormatDateTimeValue($value, $style, $workbookCulture, $dateSystem);
         }
 
         if (DisplayTextFormatterSupport::IsNumericValue($value)) {
@@ -126,6 +128,12 @@ final class DisplayTextFormatter
 
         $sectionCulture = null;
         $localizedSection = DisplayTextLocaleSupport::ApplyLocaleDirectives($selectedSection->Raw, $workbookCulture, $sectionCulture);
+        if (strpos($selectedSection->Raw, '-401]') !== false
+            && $sectionCulture->NumberFormat->NumberDecimalSeparator !== '.') {
+            $sectionCulture = $sectionCulture->Clone();
+            $sectionCulture->NumberFormat->NumberDecimalSeparator = '.';
+        }
+
         $sanitizedSection = DisplayTextFormatterSupport::SanitizeNumericSection($localizedSection);
         if ($sanitizedSection === null || trim($sanitizedSection) === '') {
             return self::FormatStringValue($value);
@@ -158,7 +166,7 @@ final class DisplayTextFormatter
         return self::FormatStringValue($value);
     }
 
-    private static function FormatDateTimeValue($value, StyleValue $style, $workbookCulture)
+    private static function FormatDateTimeValue($value, StyleValue $style, $workbookCulture, $dateSystem)
     {
         $formatCode = NumberFormat::ResolveFormatCode($style->NumberFormat->Number, $style->NumberFormat->Custom);
         if ($formatCode === null || trim($formatCode) === '' || $formatCode === 'General') {
@@ -178,7 +186,8 @@ final class DisplayTextFormatter
         $sectionFormat = DisplayTextFormatterSupport::StripDirectiveBrackets($localizedSection, true);
         // Elapsed-time formats are duration-style output, not calendar rendering.
         if (DisplayTextDateFormatSupport::ContainsElapsedTimeToken($sectionFormat)) {
-            return DisplayTextDateFormatSupport::FormatElapsedTimeValue($value, $sectionFormat, $sectionCulture);
+            $serial = DateSerialConverter::ToSerial($value, $dateSystem);
+            return DisplayTextDateFormatSupport::FormatElapsedTimeValue($serial, $sectionFormat, $sectionCulture);
         }
 
         if ($sectionFormat === null || trim($sectionFormat) === '') {
@@ -186,10 +195,62 @@ final class DisplayTextFormatter
         }
 
         try {
-            return DisplayTextDateFormatSupport::FormatDateTimeValue($value, $sectionFormat, $sectionCulture);
+            $result = DisplayTextDateFormatSupport::FormatDateTimeValue($value, $sectionFormat, $sectionCulture);
+            if (stripos($section->Raw, '[DBNum1]') !== false) {
+                return self::FormatDbNumOne($result);
+            }
+
+            return $result;
         } catch (\Exception $exception) {
             return self::FormatRawDateTimeValue($value);
         }
+    }
+
+    private static function FormatDbNumOne($text)
+    {
+        $digits = array('零', '一', '二', '三', '四', '五', '六', '七', '八', '九');
+        $yearChar = '年';
+        $yearLength = strlen($yearChar);
+        $builder = '';
+        for ($index = 0; $index < strlen($text); $index++) {
+            if ($text[$index] < '0' || $text[$index] > '9') {
+                $builder .= $text[$index];
+                continue;
+            }
+
+            $end = $index + 1;
+            while ($end < strlen($text) && $text[$end] >= '0' && $text[$end] <= '9') {
+                $end++;
+            }
+
+            if ($end < strlen($text) && substr($text, $end, $yearLength) === $yearChar) {
+                for ($digitIndex = $index; $digitIndex < $end; $digitIndex++) {
+                    $builder .= $digits[(int) $text[$digitIndex]];
+                }
+            } else {
+                $digitsText = substr($text, $index, $end - $index);
+                $number = ctype_digit($digitsText) ? (int) $digitsText : -1;
+                if ($number >= 0 && $number < 100) {
+                    if ($number >= 10) {
+                        if ($number >= 20) {
+                            $builder .= $digits[intdiv($number, 10)];
+                        }
+
+                        $builder .= '十';
+                    }
+
+                    if ($number % 10 !== 0 || $number === 0) {
+                        $builder .= $digits[$number % 10];
+                    }
+                } else {
+                    $builder .= $digitsText;
+                }
+            }
+
+            $index = $end - 1;
+        }
+
+        return $builder;
     }
 
     private static function FormatRawDateTimeValue($value)
@@ -212,6 +273,38 @@ final class DisplayTextFormatter
         $slashIndex = strpos($sanitizedSection, '/');
         if ($slashIndex <= 0) {
             return false;
+        }
+
+        $fixedEnd = $slashIndex + 1;
+        while ($fixedEnd < strlen($sanitizedSection) && ctype_digit($sanitizedSection[$fixedEnd])) {
+            $fixedEnd++;
+        }
+
+        if ($fixedEnd > $slashIndex + 1) {
+            $fixedDenominatorText = substr($sanitizedSection, $slashIndex + 1, $fixedEnd - $slashIndex - 1);
+            if (!ctype_digit($fixedDenominatorText)) {
+                return false;
+            }
+
+            $fixedDenominator = (int) $fixedDenominatorText;
+            if ($fixedDenominator <= 0) {
+                return false;
+            }
+
+            $absolute = abs($numericValue);
+            $whole = (int) floor($absolute);
+            $numerator = (int) round(($absolute - $whole) * $fixedDenominator, 0, PHP_ROUND_HALF_UP);
+            if ($numerator >= $fixedDenominator) {
+                $whole++;
+                $numerator = 0;
+            }
+
+            $sign = $numericValue < 0 && !$useAbsoluteValue ? '-' : '';
+            $result = $numerator === 0
+                ? $sign . (string) $whole
+                : $sign . ($whole === 0 ? '' : (string) $whole . ' ')
+                    . (string) $numerator . '/' . (string) $fixedDenominator;
+            return true;
         }
 
         $denominatorDigits = 0;

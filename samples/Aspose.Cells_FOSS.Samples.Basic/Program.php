@@ -34,7 +34,7 @@ final class Program
         echo self::GetValueTypeName($loadedSheet->Cells['C1']) . ':' . $loadedSheet->Cells['C1']->StringValue . PHP_EOL;
         echo self::GetValueTypeName($loadedSheet->Cells['D1']) . ':' . $loadedSheet->Cells['D1']->StringValue . PHP_EOL;
         echo self::GetValueTypeName($loadedSheet->Cells['E1']) . ':' . $loadedSheet->Cells['E1']->StringValue . PHP_EOL;
-        echo $loadedSheet->Cells['G1']->Formula . ' -> ' . $loadedSheet->Cells['G1']->StringValue . PHP_EOL; 
+        echo $loadedSheet->Cells['G1']->Formula . ' -> ' . $loadedSheet->Cells['G1']->StringValue . PHP_EOL;
     }
 
     private static function GetValueTypeName(Cell $cell)

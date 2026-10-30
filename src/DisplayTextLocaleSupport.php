@@ -31,6 +31,13 @@ final class DisplayTextLocaleSupport
                     if (self::TryResolveLocaleDirective($token, $sectionCulture, $replacement, $resolvedCulture)) {
                         $builder .= $replacement;
                         $sectionCulture = $resolvedCulture;
+                        if (strcasecmp($token, '$-F800') === 0
+                            || strcasecmp($token, '$-F400') === 0) {
+                            // Excel's system long-date/time directives replace the
+                            // stored fallback pattern rather than prefixing it.
+                            return $builder;
+                        }
+
                         $index = $endIndex;
                         continue;
                     }
@@ -52,7 +59,12 @@ final class DisplayTextLocaleSupport
         }
 
         $dashIndex = strrpos($token, '-');
-        if ($dashIndex === false || $dashIndex <= 0 || $dashIndex >= strlen($token) - 1) {
+        if ($dashIndex === false) {
+            $replacement = self::QuoteLiteral(substr($token, 1));
+            return true;
+        }
+
+        if ($dashIndex === 0 || $dashIndex >= strlen($token) - 1) {
             return false;
         }
 
@@ -61,13 +73,17 @@ final class DisplayTextLocaleSupport
         $resolvedCulture = self::ResolveCulture($localeCode, $fallbackCulture);
 
         if (strcasecmp($localeCode, 'F800') === 0) {
-            $replacement = $fallbackCulture->DateTimeFormat->LongDatePattern;
+            $replacement = str_starts_with($fallbackCulture->Name, 'zh')
+                ? 'yyyy"年"m"月"d"日"'
+                : $fallbackCulture->DateTimeFormat->LongDatePattern;
             $resolvedCulture = $fallbackCulture;
             return true;
         }
 
         if (strcasecmp($localeCode, 'F400') === 0) {
-            $replacement = $fallbackCulture->DateTimeFormat->LongTimePattern;
+            $replacement = str_starts_with($fallbackCulture->Name, 'zh')
+                ? 'H:mm:ss'
+                : $fallbackCulture->DateTimeFormat->LongTimePattern;
             $resolvedCulture = $fallbackCulture;
             return true;
         }

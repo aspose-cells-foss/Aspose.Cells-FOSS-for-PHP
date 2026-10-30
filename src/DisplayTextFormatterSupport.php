@@ -37,27 +37,30 @@ final class DisplayTextFormatterSupport
         }
 
         if ($numericSectionCount === 1) {
-            $useAbsoluteValue = self::ShouldUseAbsoluteValue($sections[0]->Raw, $numericValue);
+            // A lone section formats the signed value itself.
+            $useAbsoluteValue = false;
             return $sections[0];
         }
 
         if ($numericSectionCount === 2) {
             if ($numericValue < 0) {
-                $useAbsoluteValue = self::ShouldUseAbsoluteValue($sections[1]->Raw, $numericValue);
+                // A dedicated negative section receives the magnitude. Its own
+                // literals (minus sign, parentheses, currency) supply the sign.
+                $useAbsoluteValue = true;
                 return $sections[1];
             }
 
-            $useAbsoluteValue = self::ShouldUseAbsoluteValue($sections[0]->Raw, $numericValue);
+            $useAbsoluteValue = false;
             return $sections[0];
         }
 
         if ($numericValue > 0) {
-            $useAbsoluteValue = self::ShouldUseAbsoluteValue($sections[0]->Raw, $numericValue);
+            $useAbsoluteValue = false;
             return $sections[0];
         }
 
         if ($numericValue < 0) {
-            $useAbsoluteValue = self::ShouldUseAbsoluteValue($sections[1]->Raw, $numericValue);
+            $useAbsoluteValue = true;
             return $sections[1];
         }
 
@@ -286,7 +289,7 @@ final class DisplayTextFormatterSupport
             $builder .= $character;
         }
 
-        return trim($builder);
+        return $builder;
     }
 
     public static function StripDirectiveBrackets($section, $preserveElapsedTokens)

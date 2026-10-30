@@ -11,8 +11,10 @@ final class PageSetupModel
     public $Orientation = 0;
     public $FirstPageNumber = null;
     public $Scale = null;
+    public $FitToPage = false;
     public $FitToWidth = null;
     public $FitToHeight = null;
+    public $PageOrderOverThenDown = false;
     public $PrintArea;
     public $PrintTitleRows;
     public $PrintTitleColumns;

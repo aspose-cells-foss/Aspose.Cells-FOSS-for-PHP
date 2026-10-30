@@ -57,6 +57,9 @@ final class XlsxWorkbookConditionalFormatting
                 if (!self::TryLoadCondition($formatting, $ruleElement, $stylesheet, $diagnostics, $options, $sheetName, $sqref)) {
                     continue;
                 }
+
+                XlsxDataBarExtensionReader::Apply($worksheetRoot, $ruleElement,
+                    $formatting->Conditions[count($formatting->Conditions) - 1]);
             }
 
             if (count($formatting->Conditions) === 0) {

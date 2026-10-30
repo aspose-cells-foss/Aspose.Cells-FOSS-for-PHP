@@ -60,8 +60,10 @@ final class Program
                 new TestCase('displaystringvalue_applies_numeric_formats_and_stringvalue_stays_raw', array(Program::class, 'DisplayStringValueAppliesNumericFormatsAndStringValueStaysRaw')),
                 new TestCase('displaystringvalue_applies_date_and_text_formats', array(Program::class, 'DisplayStringValueAppliesDateAndTextFormats')),
                 new TestCase('displaystringvalue_uses_workbook_culture_and_locale_directives', array(Program::class, 'DisplayStringValueUsesWorkbookCultureAndLocaleDirectives')),
+                new TestCase('displaystringvalue_uses_english_month_abbreviations_without_locale_directive', array(Program::class, 'DisplayStringValueUsesEnglishMonthAbbreviationsWithoutLocaleDirective')),
                 new TestCase('displaystringvalue_applies_extended_date_tokens', array(Program::class, 'DisplayStringValueAppliesExtendedDateTokens')),
                 new TestCase('displaystringvalue_applies_long_time_and_elapsed_fraction_with_culture', array(Program::class, 'DisplayStringValueAppliesLongTimeAndElapsedFractionWithCulture')),
+                new TestCase('displaystringvalue_elapsed_time_honors_1904_date_system', array(Program::class, 'DisplayStringValueElapsedTimeHonors1904DateSystem')),
                 new TestCase('formula_property_normalizes_and_preserves_cached_value', array(Program::class, 'FormulaPropertyNormalizesAndPreservesCachedValue')),
                 new TestCase('blank_cells_are_blank_by_default', array(Program::class, 'BlankCellsAreBlankByDefault')),
                 new TestCase('worksheet_name_and_collection_guards', array(Program::class, 'WorksheetNameAndCollectionGuards')),
@@ -337,7 +339,7 @@ final class Program
         AssertEx::Equal('5/6/2024 7:08', $customDate->StringValue);
         AssertEx::Equal('6-May-24 7:08 AM', $customDate->DisplayStringValue);
         AssertEx::Equal('5/6/2024 7:08', $elapsed->StringValue);
-        AssertEx::Equal('7:08:09', $elapsed->DisplayStringValue);
+        AssertEx::Equal('1090039:08:09', $elapsed->DisplayStringValue);
         AssertEx::Equal('ABC', $textCell->StringValue);
         AssertEx::Equal('Item ABC', $textCell->DisplayStringValue);
     }
@@ -390,6 +392,19 @@ final class Program
 
         $workbook->Settings->Culture = $deCulture;
         AssertEx::Equal('Montag, 6. Mai 2024', $longDateCell->DisplayStringValue);
+    }
+
+    public static function DisplayStringValueUsesEnglishMonthAbbreviationsWithoutLocaleDirective()
+    {
+        $workbook = new Workbook();
+        $workbook->Settings->Culture = CultureInfo::GetCultureInfo('zh-CN');
+        $cell = $workbook->Worksheets[0]->Cells['A5'];
+        $cell->PutValue(new \DateTime('2025-01-01 00:00:00'));
+        $style = $cell->GetStyle();
+        $style->NumberFormat = 'mmm-yy';
+        $cell->SetStyle($style);
+
+        AssertEx::Equal('Jan-25', $cell->DisplayStringValue);
     }
 
     public static function DisplayStringValueAppliesExtendedDateTokens()
@@ -451,13 +466,26 @@ final class Program
         $longTimeCell->SetStyle($longTimeStyle);
 
         $elapsedCell = $sheet->Cells['G4'];
-        $elapsedCell->PutValue($timestamp);
+        $elapsedCell->PutValue(new \DateTime('1899-12-31 07:08:09.345'));
         $elapsedStyle = $elapsedCell->GetStyle();
         $elapsedStyle->NumberFormat = '[h]:mm:ss.000';
         $elapsedCell->SetStyle($elapsedStyle);
 
         AssertEx::Equal('07:08:09', $longTimeCell->DisplayStringValue);
         AssertEx::Equal('7:08:09,345', $elapsedCell->DisplayStringValue);
+    }
+
+    public static function DisplayStringValueElapsedTimeHonors1904DateSystem()
+    {
+        $workbook = new Workbook();
+        $workbook->Settings->Date1904 = true;
+        $cell = $workbook->Worksheets[0]->Cells['A1'];
+        $cell->PutValue(new \DateTime('1904-01-02 12:00:00'));
+        $style = $cell->GetStyle();
+        $style->NumberFormat = '[h]:mm:ss';
+        $cell->SetStyle($style);
+
+        AssertEx::Equal('36:00:00', $cell->DisplayStringValue);
     }
 
     public static function FormulaPropertyNormalizesAndPreservesCachedValue()

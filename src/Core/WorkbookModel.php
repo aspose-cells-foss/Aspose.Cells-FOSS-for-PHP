@@ -15,6 +15,9 @@ final class WorkbookModel
     public $ActiveSheetIndex;
     public $DefinedNames;
     public $RawThemeXml;
+    public $RawTableStylesXml;
+    public $TableDifferentialStyles;
+    public $RawTableDifferentialStylesXml;
     public $ExternalLinks;
 
     public function __construct()
@@ -31,6 +34,8 @@ final class WorkbookModel
         );
         $this->DefinedNames = array();
         $this->ActiveSheetIndex = 0;
+        $this->TableDifferentialStyles = array();
+        $this->RawTableDifferentialStylesXml = array();
         $this->ExternalLinks = array();
     }
 }

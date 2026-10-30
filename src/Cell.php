@@ -34,7 +34,7 @@ class Cell
             // Display formatting is style-aware while StringValue stays a stable raw
             // representation of the logical cell payload.
             $style = $record === null ? $this->_worksheet->Workbook->Model->DefaultStyle : $record->Style;
-            return DisplayTextFormatter::FormatDisplayValue($record === null ? null : $record->Value, $style, $this->_worksheet->Workbook->Model->Settings->DisplayCulture);
+            return DisplayTextFormatter::FormatDisplayValue($record === null ? null : $record->Value, $style, $this->_worksheet->Workbook->Model->Settings->DisplayCulture, $this->_worksheet->Workbook->Model->Settings->DateSystem);
         }
 
         if ($propertyName === 'Formula') {

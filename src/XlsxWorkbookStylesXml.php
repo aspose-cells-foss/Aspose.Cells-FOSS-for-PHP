@@ -241,8 +241,16 @@ final class XlsxWorkbookStylesXml
         if ($fill !== null) {
             $fillValue = self::ReadFillValue($fill);
             $style->Pattern = $fillValue->Pattern;
-            $style->ForegroundColor = $fillValue->ForegroundColor;
-            $style->BackgroundColor = $fillValue->BackgroundColor;
+            $patternFill = $fill->Element(self::MainNs . 'patternFill');
+            if ($style->Pattern == FillPatternKind::None && $patternFill !== null
+                && $patternFill->Attribute('patternType') === null
+                && $patternFill->Element(self::MainNs . 'bgColor') !== null) {
+                $style->Pattern = FillPatternKind::Solid;
+            }
+
+            // Differential formats store the visible solid fill color in bgColor, reversed from regular cell fills.
+            $style->ForegroundColor = $fillValue->BackgroundColor;
+            $style->BackgroundColor = $fillValue->ForegroundColor;
         }
         $border = $dxf->Element(self::MainNs . 'border');
         if ($border !== null) {
@@ -292,7 +300,9 @@ final class XlsxWorkbookStylesXml
         $size = XlsxWorkbookArchiveHelpers::ParseDoubleAttribute($sizeAttribute);
         $value->Size = $size === null ? 11.0 : $size;
         $value->Bold = $font->Element(self::MainNs . 'b') !== null;
-        $value->Italic = $font->Element(self::MainNs . 'i') !== null;
+        $italicElement = $font->Element(self::MainNs . 'i');
+        $value->Italic = $italicElement !== null
+            && self::ParseOptionalBoolAttribute($italicElement->Attribute('val')) !== false;
         $value->Underline = self::ParseUnderlineType($font->Element(self::MainNs . 'u'));
         $value->StrikeThrough = $font->Element(self::MainNs . 'strike') !== null;
         $value->Color = self::ReadColorValue($font->Element(self::MainNs . 'color'));
@@ -567,7 +577,7 @@ final class XlsxWorkbookStylesXml
         if ($cellFormat->BorderId != 0) {
             $element->SetAttributeValue('applyBorder', 1);
         }
-        $alignmentElement = self::BuildAlignmentElement($cellFormat->Alignment);
+        $alignmentElement = XlsxStyleAlignmentWriter::Build($cellFormat->Alignment);
         if ($alignmentElement !== null) {
             $element->SetAttributeValue('applyAlignment', 1);
             $element->Add($alignmentElement);
@@ -587,10 +597,11 @@ final class XlsxWorkbookStylesXml
             $element->Add(self::BuildFontElement($style->Font));
         }
         if ($style->Pattern !== FillPatternKind::None || !XlsxWorkbookStylesValueHelpers::IsEmptyColor($style->ForegroundColor) || !XlsxWorkbookStylesValueHelpers::IsEmptyColor($style->BackgroundColor)) {
+            // Differential formats store the visible solid fill color in bgColor, reversed from regular cell fills.
             $fillValue = new FillValue();
             $fillValue->Pattern = $style->Pattern;
-            $fillValue->ForegroundColor = $style->ForegroundColor;
-            $fillValue->BackgroundColor = $style->BackgroundColor;
+            $fillValue->ForegroundColor = $style->BackgroundColor;
+            $fillValue->BackgroundColor = $style->ForegroundColor;
             $element->Add(self::BuildFillElement($fillValue));
         }
         if (!XlsxWorkbookStylesValueHelpers::BordersEqual($style->Borders, StyleValue::Default()->Borders)) {
@@ -606,7 +617,7 @@ final class XlsxWorkbookStylesXml
             }
             $element->Add($numFmtElement);
         }
-        $alignmentElement = self::BuildAlignmentElement($style->Alignment);
+        $alignmentElement = XlsxStyleAlignmentWriter::Build($style->Alignment);
         if ($alignmentElement !== null) {
             $element->Add($alignmentElement);
         }
@@ -722,47 +733,6 @@ final class XlsxWorkbookStylesXml
             $element->Add($colorElement);
         }
         return $element;
-    }
-
-    private static function BuildAlignmentElement($alignment)
-    {
-        $element = new XElement(self::MainNs . 'alignment');
-        $hasValue = false;
-        $horizontal = XlsxWorkbookStylesValueHelpers::GetHorizontalAlignmentName($alignment->Horizontal);
-        if (!($horizontal === null || $horizontal === '')) {
-            $element->SetAttributeValue('horizontal', $horizontal);
-            $hasValue = true;
-        }
-        $vertical = XlsxWorkbookStylesValueHelpers::GetVerticalAlignmentName($alignment->Vertical);
-        if (!($vertical === null || $vertical === '')) {
-            $element->SetAttributeValue('vertical', $vertical);
-            $hasValue = true;
-        }
-        if ($alignment->WrapText) {
-            $element->SetAttributeValue('wrapText', 1);
-            $hasValue = true;
-        }
-        if ($alignment->IndentLevel > 0) {
-            $element->SetAttributeValue('indent', $alignment->IndentLevel);
-            $hasValue = true;
-        }
-        if ($alignment->TextRotation != 0) {
-            $element->SetAttributeValue('textRotation', $alignment->TextRotation);
-            $hasValue = true;
-        }
-        if ($alignment->ShrinkToFit) {
-            $element->SetAttributeValue('shrinkToFit', 1);
-            $hasValue = true;
-        }
-        if ($alignment->ReadingOrder != 0) {
-            $element->SetAttributeValue('readingOrder', $alignment->ReadingOrder);
-            $hasValue = true;
-        }
-        if ($alignment->RelativeIndent != 0) {
-            $element->SetAttributeValue('relativeIndent', $alignment->RelativeIndent);
-            $hasValue = true;
-        }
-        return $hasValue ? $element : null;
     }
 
     private static function BuildProtectionElement($protection)

@@ -419,6 +419,9 @@ final class XlsxWorkbookArchiveHelpers
         }
 
         return strpos($builder, 'yy') !== false
+            || strpos($builder, 'aaa') !== false
+            || (strpos($builder, 'm') !== false && strpos($formatCode, '月') !== false)
+            || (strpos($builder, 'd') !== false && strpos($formatCode, '日') !== false)
             || strpos($builder, 'dd') !== false
             || strpos($builder, 'mm') !== false
             || strpos($builder, 'm/') !== false

@@ -112,7 +112,7 @@ final class XlsxWorkbookPageSetup
 
     public static function BuildSheetProperties(PageSetupModel $pageSetup)
     {
-        if ($pageSetup->FitToWidth === null && $pageSetup->FitToHeight === null) {
+        if (!$pageSetup->FitToPage) {
             return null;
         }
 
@@ -172,11 +172,16 @@ final class XlsxWorkbookPageSetup
             && $pageSetup->FirstPageNumber === null
             && $pageSetup->Scale === null
             && $pageSetup->FitToWidth === null
-            && $pageSetup->FitToHeight === null) {
+            && $pageSetup->FitToHeight === null
+            && !$pageSetup->PageOrderOverThenDown) {
             return null;
         }
 
         $element = new XElement(XlsxWorkbookSerializerCommon::MainNs . 'pageSetup');
+        if ($pageSetup->PageOrderOverThenDown) {
+            $element->SetAttributeValue('pageOrder', 'overThenDown');
+        }
+
         if ($pageSetup->PaperSize > 0) {
             $element->SetAttributeValue('paperSize', $pageSetup->PaperSize);
         }
@@ -271,6 +276,9 @@ final class XlsxWorkbookPageSetup
     public static function LoadWorksheetPageSetup(WorksheetModel $worksheetModel, XElement $worksheetRoot, LoadDiagnostics $diagnostics, LoadOptions $options, $sheetName)
     {
         $pageSetup = $worksheetModel->PageSetup;
+        $sheetPr = $worksheetRoot->Element(XlsxWorkbookSerializerCommon::MainNs . 'sheetPr');
+        $setupProperties = $sheetPr === null ? null : $sheetPr->Element(XlsxWorkbookSerializerCommon::MainNs . 'pageSetUpPr');
+        $pageSetup->FitToPage = XlsxWorkbookArchiveHelpers::ParseBoolAttribute($setupProperties === null ? null : $setupProperties->Attribute('fitToPage'));
         self::LoadPageMargins($pageSetup, $worksheetRoot->Element(XlsxWorkbookSerializerCommon::MainNs . 'pageMargins'), $diagnostics, $options, $sheetName);
         self::LoadPageSetupCore($pageSetup, $worksheetRoot->Element(XlsxWorkbookSerializerCommon::MainNs . 'pageSetup'), $diagnostics, $options, $sheetName);
         self::LoadPrintOptions($pageSetup, $worksheetRoot->Element(XlsxWorkbookSerializerCommon::MainNs . 'printOptions'));
@@ -306,6 +314,7 @@ final class XlsxWorkbookPageSetup
         $pageSetup->FitToWidth = self::ParseNonNegativeIntAttribute($pageSetupElement->Attribute('fitToWidth'), $diagnostics, $options, $sheetName, 'fitToWidth');
         $pageSetup->FitToHeight = self::ParseNonNegativeIntAttribute($pageSetupElement->Attribute('fitToHeight'), $diagnostics, $options, $sheetName, 'fitToHeight');
         $pageSetup->Orientation = self::ParseOrientation((string) $pageSetupElement->Attribute('orientation'), $diagnostics, $options, $sheetName);
+        $pageSetup->PageOrderOverThenDown = strcasecmp((string) $pageSetupElement->Attribute('pageOrder'), 'overThenDown') === 0;
     }
 
     private static function LoadPrintOptions(PageSetupModel $pageSetup, $printOptionsElement)
@@ -463,7 +472,7 @@ final class XlsxWorkbookPageSetup
         return implode(',', $segments);
     }
 
-    private static function NormalizeLoadedPrintArea($value)
+    public static function NormalizeLoadedPrintArea($value)
     {
         $segments = array();
         foreach (self::SplitReferenceList($value) as $segment) {

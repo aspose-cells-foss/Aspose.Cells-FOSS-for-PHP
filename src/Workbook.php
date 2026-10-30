@@ -171,6 +171,11 @@ class Workbook
             $this->_model->DefinedNames = array();
             $this->_model->DefinedNames = array_merge($this->_model->DefinedNames, $loadedModel->DefinedNames);
             $this->_model->RawThemeXml = $loadedModel->RawThemeXml;
+            $this->_model->RawTableStylesXml = $loadedModel->RawTableStylesXml;
+            $this->_model->TableDifferentialStyles = array();
+            $this->_model->TableDifferentialStyles = array_merge($this->_model->TableDifferentialStyles, $loadedModel->TableDifferentialStyles);
+            $this->_model->RawTableDifferentialStylesXml = array();
+            $this->_model->RawTableDifferentialStylesXml = array_merge($this->_model->RawTableDifferentialStylesXml, $loadedModel->RawTableDifferentialStylesXml);
             $this->_model->ExternalLinks = array();
             $this->_model->ExternalLinks = array_merge($this->_model->ExternalLinks, $loadedModel->ExternalLinks);
         } catch (CellsException $exception) {

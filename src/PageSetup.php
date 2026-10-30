@@ -159,6 +159,9 @@ final class PageSetup
                 throw new CellsException('Scale must be between 10 and 400.');
             }
             $this->_model->Scale = $value;
+            if ($value !== null) {
+                $this->_model->FitToPage = false;
+            }
             return;
         }
         if ($propertyName === 'FitToPagesWide') {
@@ -166,6 +169,9 @@ final class PageSetup
                 throw new CellsException('FitToPagesWide must be zero or greater.');
             }
             $this->_model->FitToWidth = $value;
+            if ($value !== null) {
+                $this->_model->FitToPage = true;
+            }
             return;
         }
         if ($propertyName === 'FitToPagesTall') {
@@ -173,6 +179,9 @@ final class PageSetup
                 throw new CellsException('FitToPagesTall must be zero or greater.');
             }
             $this->_model->FitToHeight = $value;
+            if ($value !== null) {
+                $this->_model->FitToPage = true;
+            }
             return;
         }
         if ($propertyName === 'PrintArea') {

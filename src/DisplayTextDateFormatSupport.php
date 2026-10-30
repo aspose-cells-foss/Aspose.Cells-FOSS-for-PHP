@@ -2,6 +2,8 @@
 
 namespace Aspose\Cells_FOSS;
 
+use Aspose\Cells_FOSS\Core\DateSerialConverter;
+
 final class DisplayTextDateFormatSupport
 {
     private function __construct()
@@ -10,12 +12,34 @@ final class DisplayTextDateFormatSupport
 
     public static function FormatDateTimeValue($value, $formatCode, $culture)
     {
+        if (stripos($formatCode, 'ss') !== false && strpos($formatCode, '.0') === false) {
+            $microseconds = (int) $value->format('u');
+            $value = clone $value;
+            $value->setTime((int) $value->format('G'), (int) $value->format('i'), (int) $value->format('s'), 0);
+            if ($microseconds >= 500000) {
+                $value->modify('+1 second');
+            }
+        }
+
         $builder = '';
         $hasAmPm = stripos($formatCode, 'AM/PM') !== false
-            || stripos($formatCode, 'A/P') !== false;
+            || stripos($formatCode, 'A/P') !== false
+            || strpos($formatCode, '上午/下午') !== false;
         $inQuote = false;
 
         for ($index = 0; $index < strlen($formatCode); $index++) {
+            if (self::MatchesToken($formatCode, $index, '上午/下午')) {
+                $builder .= (int) $value->format('G') < 12 ? '上午' : '下午';
+                $index += strlen('上午/下午') - 1;
+                continue;
+            }
+
+            if (self::MatchesToken($formatCode, $index, 'aaa')) {
+                $builder .= $culture->DateTimeFormat->GetAbbreviatedDayName((int) $value->format('w'));
+                $index += 2;
+                continue;
+            }
+
             if (self::MatchesToken($formatCode, $index, 'AM/PM')) {
                 $builder .= self::GetAmPmDesignator($value, $culture, false);
                 $index += 4;
@@ -228,11 +252,17 @@ final class DisplayTextDateFormatSupport
 
     public static function FormatElapsedTimeValue($time, $formatCode, $culture)
     {
-        $hours = (int) $time->format('G');
-        $minutes = (int) $time->format('i');
-        $seconds = (int) $time->format('s');
-        $milliseconds = (int) $time->format('v');
-        $totalSeconds = $hours * 3600 + $minutes * 60 + $seconds;
+        // $time carries the elapsed duration in days (PHP stand-in for System.TimeSpan).
+        $ticks = (int) round($time * DateSerialConverter::TicksPerDay);
+        if (stripos($formatCode, 'ss') !== false && strpos($formatCode, '.0') === false) {
+            $ticks = intdiv($ticks + 5000000, 10000000) * 10000000;
+        }
+
+        $milliseconds = intdiv($ticks % 10000000, 10000);
+        $totalSeconds = intdiv($ticks, 10000000);
+        $hours = intdiv($totalSeconds, 3600) % 24;
+        $minutes = intdiv($totalSeconds, 60) % 60;
+        $seconds = $totalSeconds % 60;
         $totalHours = (int) floor($totalSeconds / 3600);
         $totalMinutes = (int) floor($totalSeconds / 60);
         $builder = '';

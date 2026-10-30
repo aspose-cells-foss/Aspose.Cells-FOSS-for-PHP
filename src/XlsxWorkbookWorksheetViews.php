@@ -71,7 +71,7 @@ final class XlsxWorkbookWorksheetViews
 
     private static function BuildPageSetupPropertiesElement($pageSetup)
     {
-        if ($pageSetup->FitToWidth === null && $pageSetup->FitToHeight === null) {
+        if (!$pageSetup->FitToPage) {
             return null;
         }
 

@@ -9,6 +9,8 @@ final class StylesheetLoadContext
     public $DefaultCellStyle;
     public $CellFormats;
     public $DifferentialFormats;
+    public $RawTableStylesXml;
+    public $RawDifferentialFormatsXml;
     public $DateStyleIndexes;
 
     public function __construct()
@@ -16,6 +18,7 @@ final class StylesheetLoadContext
         $this->DefaultCellStyle = StyleValue::Default()->Clone();
         $this->CellFormats = array(StyleValue::Default()->Clone());
         $this->DifferentialFormats = array();
+        $this->RawDifferentialFormatsXml = array();
         $this->DateStyleIndexes = array();
     }
 }

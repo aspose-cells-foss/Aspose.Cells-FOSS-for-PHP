@@ -55,6 +55,7 @@ final class DateSerialConverter
     private static function getTicks($dateTime)
     {
         $timestamp = $dateTime->getTimestamp();
-        return ($timestamp + 62135596800) * 10000000;
+        $microseconds = (int) $dateTime->format('u');
+        return ($timestamp + 62135596800) * 10000000 + $microseconds * 10;
     }
 }

@@ -24,6 +24,10 @@ final class FormatConditionModel
     public $BarColor;
     public $NegativeBarColor;
     public $ShowBorder = false;
+    public $DataBarGradient = true;
+    public $DataBarMinLength = 0.10;
+    public $DataBarMaxLength = 0.90;
+    public $DataBarAutoMinimum = false;
     public $Direction;
     public $BarLength;
     public $IconSetType;

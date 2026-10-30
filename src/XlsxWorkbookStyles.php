@@ -216,6 +216,15 @@ final class XlsxWorkbookStyles
             $context->DifferentialFormats[] = $differentialFormat;
         }
 
+        $tableStyles = $root->Element(XlsxWorkbookSerializerCommon::MainNs . 'tableStyles');
+        $context->RawTableStylesXml = $tableStyles === null ? null : $tableStyles->toString();
+        $differentialFormatsElement = $root->Element(XlsxWorkbookSerializerCommon::MainNs . 'dxfs');
+        if ($differentialFormatsElement !== null) {
+            foreach ($differentialFormatsElement->Elements(XlsxWorkbookSerializerCommon::MainNs . 'dxf') as $differentialFormatElement) {
+                $context->RawDifferentialFormatsXml[] = $differentialFormatElement->toString();
+            }
+        }
+
         $cellXfs = array();
         $cellXfsContainer = $root->Element(XlsxWorkbookSerializerCommon::MainNs . 'cellXfs');
         if ($cellXfsContainer !== null) {
