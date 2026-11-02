@@ -23,7 +23,12 @@ final class WorksheetModel
     public $Shapes;
     public $Charts;
     public $Comments;
+    public $SmartArts;
     public $TabColor = null;
+    public $BaseColumnWidth = null;
+    public $DefaultColumnWidth = null;
+    public $DefaultRowHeight = null;
+    public $CustomHeight = null;
 
     public function __construct($name)
     {
@@ -45,5 +50,6 @@ final class WorksheetModel
         $this->Shapes = array();
         $this->Charts = array();
         $this->Comments = array();
+        $this->SmartArts = array();
     }
 }

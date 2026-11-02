@@ -267,6 +267,32 @@ class XElement
     }
 
     /**
+     * Returns the descendant elements, optionally filtered by name.
+     *
+     * @param string|null $name The expanded element name, or null for all.
+     * @return XElement[] The matching elements.
+     */
+    public function Descendants($name = null)
+    {
+        $result = array();
+        foreach ($this->nodes as $node) {
+            if (!$node instanceof XElement) {
+                continue;
+            }
+
+            if ($name === null || $node->name === $name) {
+                $result[] = $node;
+            }
+
+            foreach ($node->Descendants($name) as $descendant) {
+                $result[] = $descendant;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns the concatenated text of this element and all descendants.
      *
      * @return string The text.

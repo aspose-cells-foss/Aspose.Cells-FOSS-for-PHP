@@ -2,7 +2,7 @@
 
 namespace Aspose\Cells_FOSS;
 
-final class SaveOptions
+class SaveOptions
 {
     public $SaveFormat = SaveFormat::Xlsx;
     public $UseSharedStrings = true;

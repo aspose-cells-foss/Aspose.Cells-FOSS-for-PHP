@@ -7,6 +7,7 @@ namespace Aspose\Cells_FOSS\Core;
 final class ShapeModel
 {
     public $Name;
+    public $DrawingObjectId = -1;
     public $UpperLeftRow = 0;
     public $UpperLeftColumn = 0;
     public $UpperLeftColumnOffset = 0;
@@ -20,11 +21,20 @@ final class ShapeModel
     public $GeometryType;
     public $RawStyleXml;
     public $RawTxBodyXml;
+    public $StartConnectionShapeId = -1;
+    public $StartConnectionSite = -1;
+    public $EndConnectionShapeId = -1;
+    public $EndConnectionSite = -1;
     public $RawElementXml;
 
     public function __construct()
     {
         $this->Name = '';
         $this->GeometryType = 'rect';
+        $this->DrawingObjectId = -1;
+        $this->StartConnectionShapeId = -1;
+        $this->StartConnectionSite = -1;
+        $this->EndConnectionShapeId = -1;
+        $this->EndConnectionSite = -1;
     }
 }

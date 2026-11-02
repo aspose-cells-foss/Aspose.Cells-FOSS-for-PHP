@@ -7,6 +7,7 @@ final class CellRecord
     public $Kind;
     public $Formula;
     public $Style;
+    public $RichTextRuns = null;
     public $IsExplicitlyStored;
 
     public function __construct()

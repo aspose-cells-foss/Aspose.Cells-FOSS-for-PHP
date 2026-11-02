@@ -79,6 +79,28 @@ class XDocument
     }
 
     /**
+     * Parses XML text into a document.
+     *
+     * @param string $xml The XML text.
+     * @return XDocument The document.
+     */
+    public static function Parse($xml)
+    {
+        return self::Load($xml);
+    }
+
+    /**
+     * Returns the descendant elements of the root, optionally filtered by name.
+     *
+     * @param string|null $name The expanded element name, or null for all.
+     * @return XElement[] The matching elements.
+     */
+    public function Descendants($name = null)
+    {
+        return $this->Root === null ? array() : $this->Root->Descendants($name);
+    }
+
+    /**
      * Converts a DOM element to an {@see XElement}.
      *
      * @param \DOMElement $domElement The DOM element.

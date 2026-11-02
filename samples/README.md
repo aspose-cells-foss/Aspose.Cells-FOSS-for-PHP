@@ -16,5 +16,6 @@ This folder contains small console programs that exercise implemented features i
 - `Aspose.Cells_FOSS.Samples.Pictures`: embedding images in worksheets with anchor positioning.
 - `Aspose.Cells_FOSS.Samples.DocumentProperties`: workbook metadata including title, author, keywords, and custom properties.
 - `Aspose.Cells_FOSS.Samples.Shapes`: drawing objects including rectangles, ellipses, triangles, arrows, stars, and other auto shapes.
+- `Aspose.Cells_FOSS.Samples.PdfConversion`: XLSX-to-PDF export using `PdfSaveOptions` and `SaveFormat.Pdf`.
 
 Each sample is a self-contained PHP program at `samples/<folder>/Program.php`. Run a sample with `php samples/<folder>/Program.php`. Generated workbooks are written to `output/samples` under the repository root.

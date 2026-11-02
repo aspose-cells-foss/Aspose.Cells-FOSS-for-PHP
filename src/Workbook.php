@@ -3,6 +3,7 @@
 namespace Aspose\Cells_FOSS;
 
 use Aspose\Cells_FOSS\Core\WorkbookModel;
+use Aspose\Cells_FOSS\Rendering\WorkbookPdfExporter;
 
 class Workbook
 {
@@ -128,6 +129,9 @@ class Workbook
     {
         if ($options === null) {
             $options = new SaveOptions();
+            if ($fileName !== null && str_ends_with(strtolower($fileName), '.pdf')) {
+                $options->SaveFormat = SaveFormat::Pdf;
+            }
         } elseif (!($options instanceof SaveOptions)) {
             $saveOptions = new SaveOptions();
             $saveOptions->SaveFormat = $options;
@@ -142,11 +146,16 @@ class Workbook
         }
 
         try {
-            XlsxWorkbookSerializer::Save($this->_model, $fileName, $options);
+            if ($options->SaveFormat === SaveFormat::Pdf) {
+                $pdfOptions = $options instanceof PdfSaveOptions ? $options : new PdfSaveOptions();
+                WorkbookPdfExporter::Export($this->_model, $fileName, $pdfOptions);
+            } else {
+                XlsxWorkbookSerializer::Save($this->_model, $fileName, $options);
+            }
         } catch (CellsException $exception) {
             throw $exception;
         } catch (\Throwable $exception) {
-            throw new WorkbookSaveException('Failed to save XLSX workbook.', $exception);
+            throw new WorkbookSaveException('Failed to save workbook.', $exception);
         }
     }
 

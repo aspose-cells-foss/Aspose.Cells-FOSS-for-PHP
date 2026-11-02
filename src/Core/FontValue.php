@@ -12,6 +12,8 @@ final class FontValue
     public $Underline;
     public $StrikeThrough;
     public $Color;
+    public $Family;
+    public $Scheme;
 
     public function __construct()
     {
@@ -22,6 +24,8 @@ final class FontValue
         $this->Underline = FontUnderlineType::None;
         $this->StrikeThrough = false;
         $this->Color = new ColorValue();
+        $this->Family = null;
+        $this->Scheme = FontSchemeType::None;
     }
 
     public function Clone()
@@ -34,6 +38,8 @@ final class FontValue
         $clone->Underline = $this->Underline;
         $clone->StrikeThrough = $this->StrikeThrough;
         $clone->Color = ($this->Color === null) ? new ColorValue() : clone $this->Color;
+        $clone->Family = $this->Family;
+        $clone->Scheme = $this->Scheme;
         return $clone;
     }
 }

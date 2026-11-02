@@ -9,4 +9,5 @@ final class ChartCompanionFile
     public $RelationshipType;
     public $FileName;
     public $RawContent;
+    public $BinaryContent;
 }
