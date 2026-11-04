@@ -130,6 +130,15 @@ final class SKFont
         return $width;
     }
 
+    public function GetGlyph($unicode)
+    {
+        if ($this->disposed || $this->handle === null) {
+            return 0;
+        }
+
+        return (int)SkiaLibrary::ffi()->sk_font_unichar_to_glyph($this->handle, (int)$unicode);
+    }
+
     public function Dispose()
     {
         if ($this->disposed) {
