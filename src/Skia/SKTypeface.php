@@ -8,6 +8,8 @@ final class SKTypeface
     private $disposed = false;
     private $isDefault = false;
     private static $defaultInstance = null;
+    private $fontData = null;
+    private $tableDirectory = null;
 
     private function __construct($handle, $isDefault)
     {
@@ -72,6 +74,133 @@ final class SKTypeface
 
         $ffi = SkiaLibrary::ffi();
         return $ffi->sk_typeface_unichar_to_glyph($this->handle, (int)$codepoint) !== 0;
+    }
+
+    /**
+     * Returns the list of TrueType/OpenType table tags available on this typeface.
+     * Each tag is a 32-bit value encoding four ASCII characters.
+     */
+    public function GetTableTags()
+    {
+        if ($this->disposed || $this->handle === null) {
+            return array();
+        }
+
+        $this->ensureTableDirectory();
+        if ($this->tableDirectory === null) {
+            return array();
+        }
+
+        return array_keys($this->tableDirectory);
+    }
+
+    /**
+     * Returns the size in bytes of the requested font table, or 0 if absent.
+     */
+    public function GetTableSize($tag)
+    {
+        if ($this->disposed || $this->handle === null) {
+            return 0;
+        }
+
+        $this->ensureTableDirectory();
+        if ($this->tableDirectory === null || !isset($this->tableDirectory[(int)$tag])) {
+            return 0;
+        }
+
+        return $this->tableDirectory[(int)$tag]['length'];
+    }
+
+    /**
+     * Returns the raw binary contents of the requested font table, or an empty
+     * string if the table is not available.
+     */
+    public function GetTableData($tag)
+    {
+        if ($this->disposed || $this->handle === null) {
+            return '';
+        }
+
+        $this->ensureTableDirectory();
+        if ($this->tableDirectory === null || !isset($this->tableDirectory[(int)$tag])) {
+            return '';
+        }
+
+        $entry = $this->tableDirectory[(int)$tag];
+        return substr($this->fontData, $entry['offset'], $entry['length']);
+    }
+
+    /**
+     * Opens the font stream and parses the TrueType/OpenType table directory so
+     * that individual tables can be extracted. The raw font bytes and the parsed
+     * directory are cached on the instance.
+     */
+    private function ensureTableDirectory()
+    {
+        if ($this->tableDirectory !== null) {
+            return;
+        }
+
+        $this->tableDirectory = array();
+        $this->fontData = '';
+
+        $ffi = SkiaLibrary::ffi();
+        $ttcIndex = $ffi->new('int');
+        $stream = $ffi->sk_typeface_open_stream($this->handle, \FFI::addr($ttcIndex));
+        if ($stream === null) {
+            return;
+        }
+
+        $length = (int)$ffi->sk_stream_get_length($stream);
+        if ($length <= 0 || $length > 100000000) {
+            $ffi->sk_stream_destroy($stream);
+            return;
+        }
+
+        $buffer = $ffi->new('char[' . $length . ']');
+        $read = (int)$ffi->sk_stream_read($stream, $buffer, $length);
+        $ffi->sk_stream_destroy($stream);
+        if ($read <= 0) {
+            return;
+        }
+
+        $this->fontData = \FFI::string($buffer, $read);
+        if (strlen($this->fontData) < 12) {
+            return;
+        }
+
+        // sfVersion (4) + numTables (2) + searchRange (2) + entrySelector (2) + rangeShift (2)
+        $numTables = (ord($this->fontData[4]) << 8) | ord($this->fontData[5]);
+        if ($numTables <= 0 || $numTables > 1000) {
+            return;
+        }
+
+        $offset = 12;
+        for ($i = 0; $i < $numTables; $i++) {
+            if ($offset + 16 > strlen($this->fontData)) {
+                break;
+            }
+
+            $tag = (ord($this->fontData[$offset]) << 24)
+                | (ord($this->fontData[$offset + 1]) << 16)
+                | (ord($this->fontData[$offset + 2]) << 8)
+                | ord($this->fontData[$offset + 3]);
+            $tableOffset = (ord($this->fontData[$offset + 8]) << 24)
+                | (ord($this->fontData[$offset + 9]) << 16)
+                | (ord($this->fontData[$offset + 10]) << 8)
+                | ord($this->fontData[$offset + 11]);
+            $tableLength = (ord($this->fontData[$offset + 12]) << 24)
+                | (ord($this->fontData[$offset + 13]) << 16)
+                | (ord($this->fontData[$offset + 14]) << 8)
+                | ord($this->fontData[$offset + 15]);
+
+            $this->tableDirectory[$tag] = array(
+                'offset' => $tableOffset,
+                'length' => $tableLength,
+            );
+
+            $offset += 16;
+        }
     }
 
     public function __get($propertyName)

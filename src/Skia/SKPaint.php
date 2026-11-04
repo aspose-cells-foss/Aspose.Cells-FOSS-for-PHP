@@ -30,9 +30,11 @@ final class SKPaint
         $this->handle = SkiaLibrary::ffi()->sk_paint_new();
 
         if ($font instanceof SKFont) {
-            $this->font = $font;
             $this->props['Typeface'] = $font->Typeface;
             $this->props['TextSize'] = $font->Size;
+            // Do not retain the external font reference: callers may dispose it.
+            // fontForText() will lazily create a fresh font from the stored properties.
+            $this->font = null;
             $this->syncColor();
             $this->syncStyle();
             $this->syncAntialias();

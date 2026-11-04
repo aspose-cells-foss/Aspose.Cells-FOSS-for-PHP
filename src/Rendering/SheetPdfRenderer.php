@@ -1431,9 +1431,26 @@ final class SheetPdfRenderer
 
     private function TryRecordRuns($page, $clip, $fontContext, $line, $x, $baseline, $color, $pdfFontMetrics)
     {
-        // PDF text post-processing (PdfTextSession) is not part of the PHP port, so worksheet
-        // text runs are never recorded here and always fall through to the vector path.
-        return false;
+        $session = $this->_context->PdfTextSession;
+        if ($session === null || !$this->_context->EnableWorksheetTextOptimization || $line === null || $line === '') {
+            return false;
+        }
+
+        $runs = $pdfFontMetrics ? $fontContext->SplitPdfRuns($line) : $fontContext->SplitRuns($line);
+        for ($i = 0; $i < count($runs); $i++) {
+            if (!self::SupportsType3Run($runs[$i]->Typeface)) {
+                return false;
+            }
+        }
+
+        $cursor = $x;
+        for ($i = 0; $i < count($runs); $i++) {
+            $run = $runs[$i];
+            $session->RecordWorksheetRun($page, $clip, $run->Text, $run->Typeface, $color, $fontContext->SizePt, $cursor, $baseline);
+            $cursor += $run->WidthPt;
+        }
+
+        return true;
     }
 
     private static function SupportsType3Run($typeface)

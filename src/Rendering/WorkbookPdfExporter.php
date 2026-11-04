@@ -42,10 +42,8 @@ final class WorkbookPdfExporter
             }
 
             if ($options->UseType3TextOptimization) {
-                // The PDF text post-processing chain is not ported; text is always drawn as
-                // vector outlines through PdfTextPathRenderer.
-                $context->PdfTextSession = null;
-                $context->EnableWorksheetTextOptimization = false;
+                $context->PdfTextSession = new PdfTextDocumentSession();
+                $context->EnableWorksheetTextOptimization = true;
             }
 
             $pages = self::BuildPages($context, $workbook, $options);
@@ -81,10 +79,25 @@ final class WorkbookPdfExporter
                 $pdfBuffer->Dispose();
             }
 
+            $bytes = self::RunPostProcessing($bytes, $context, $workbook, $options);
+
             self::WriteAll($stream, $bytes);
         } finally {
             $context->Dispose();
         }
+    }
+
+    private static function RunPostProcessing($bytes, $context, $workbook, $options)
+    {
+        $bytes = (new PdfImageObjectWriter())->Rewrite($bytes, $workbook);
+
+        if ($context->PdfTextSession !== null && $context->PdfTextSession->HasRuns()) {
+            $writer = new PdfTextObjectWriter($options->UseTrueTypeSubsetPrototype);
+            $bytes = $writer->Rewrite($bytes, $context->PdfTextSession);
+        }
+
+        $bytes = (new PdfContentStreamOptimizer())->Rewrite($bytes);
+        return $bytes;
     }
 
     private static function BuildPages($context, $workbook, $options)

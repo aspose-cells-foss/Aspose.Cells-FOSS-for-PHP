@@ -116,6 +116,11 @@ final class SKPath
         SkiaLibrary::ffi()->sk_path_transform($this->handle, \FFI::addr($native));
     }
 
+    public function CreateIterator($forceClose = false)
+    {
+        return new SKPathIterator($this->handle, (bool)$forceClose);
+    }
+
     public function __get($propertyName)
     {
         if ($propertyName === 'Bounds') {
