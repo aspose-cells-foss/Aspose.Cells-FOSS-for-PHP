@@ -3,6 +3,7 @@
 namespace Aspose\Cells_FOSS\Samples\PdfConversion;
 
 require_once __DIR__ . '/../../autoload.php';
+require_once __DIR__ . '/PrintOverrides.php';
 
 use Aspose\Cells_FOSS\PdfSaveOptions;
 use Aspose\Cells_FOSS\Workbook;
@@ -13,10 +14,14 @@ final class Program
     {
         $repositoryRoot = self::ResolveRepositoryRoot();
         $evaluationDate = null;
+        $printOverrides = new PrintOverrides();
         $inputArguments = array();
         $arguments = array_slice($_SERVER['argv'], 1);
 
         for ($index = 0; $index < count($arguments); $index++) {
+            if ($printOverrides->Read($arguments, $index)) {
+                continue;
+            }
             if ($arguments[$index] === '--conditional-date') {
                 $next = $index + 1 < count($arguments) ? $arguments[$index + 1] : null;
                 $parsedDate = \DateTime::createFromFormat('Y-m-d', $next !== null ? $next : '');
@@ -42,6 +47,7 @@ final class Program
             $outputPath = $outputDirectory . DIRECTORY_SEPARATOR . pathinfo($inputPath, PATHINFO_FILENAME) . '.pdf';
 
             $workbook = new Workbook($inputPath);
+            $printOverrides->Apply($workbook);
             $options = new PdfSaveOptions();
             $options->ConditionalFormattingEvaluationDate = $evaluationDate;
             $workbook->Save($outputPath, $options);

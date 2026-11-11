@@ -1,10 +1,10 @@
 # Aspose.Cells FOSS for PHP
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](License/LICENSE.txt) [![PHP](https://img.shields.io/badge/php-%3E%3D8.1-777bb4.svg)](https://www.php.net/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](License/LICENSE.txt) [![PHP](https://img.shields.io/badge/php-%3E%3D8.1-777bb4.svg)](https://www.php.net/) [![Composer version](https://img.shields.io/packagist/v/aspose/cells-foss-for-php.svg)](https://packagist.org/packages/aspose/cells-foss-for-php)
 
-Aspose.Cells FOSS for PHP is an MIT-licensed spreadsheet library for PHP. It provides an Aspose.Cells-style API for creating, loading, editing, and saving Excel `.xlsx` workbooks, based on a faithful port of the C# `aspose-cells-foss-for-net` sources.
+Aspose.Cells FOSS for PHP is an MIT-licensed spreadsheet library for PHP. It provides an Aspose.Cells-style API for creating, loading, editing, and saving Excel `.xlsx` workbooks, and it can also export supported workbook content to PDF through the built-in renderer.
 
-The package requires PHP 8.1 or later with the `zip`, `dom`, `simplexml`, and `mbstring` extensions. It runs on Windows, Linux, and macOS, and does not require Microsoft Excel or any native Office installation. The Composer package name is `aspose/cells-foss-for-php`; the public namespace is `Aspose\Cells_FOSS`.
+The package requires PHP 8.1 or later with the `zip`, `dom`, `simplexml`, and `mbstring` extensions. PDF export additionally requires the `ffi` extension and the Skia native library shipped under `runtime/` (or a path set through `ASPOSE_SKIA_LIBRARY`). It runs on Windows, Linux, and macOS, and does not require Microsoft Excel or any native Office installation. The Composer package name is `aspose/cells-foss-for-php`; the public namespace is `Aspose\Cells_FOSS`.
 
 ## Navigation
 
@@ -24,6 +24,7 @@ The package requires PHP 8.1 or later with the `zip`, `dom`, `simplexml`, and `m
 - Read and write scalar values, formulas, dates, and number formats.
 - Apply styles including fonts, fills, borders, alignment, wrapping, and locking.
 - Configure validations, conditional formatting, hyperlinks, defined names, filters, tables, comments, pictures, shapes, charts, and page setup.
+- Export workbooks to PDF with `SaveFormat.Pdf` or `PdfSaveOptions`.
 
 ## Installation
 
@@ -115,6 +116,7 @@ Runnable samples live under [`samples/`](samples/README.md). Feature areas curre
 - pictures
 - document properties
 - shapes
+- PDF conversion
 
 Run one sample from the repository root:
 
@@ -128,13 +130,14 @@ Generated workbooks are written to `output/samples` under the repository root.
 
 - [Samples overview](samples/README.md)
 - [C# to PHP porting conventions](PORTING_CONVENTIONS.md)
+- [Contributor and agent instructions](agents.md)
 - [Bootstrap autoloader](autoload.php)
 
 ## Scope and Limitations
 
 - Only `.xlsx` is supported as the spreadsheet file format for load and save.
 - The library stores formulas but does not include a formula calculation engine.
-- There is no PDF, HTML, or image export API.
+- PDF export is supported, but there is no general HTML export export API.
 - Macros, VBA, and pivot tables are outside the supported public API surface.
 - Broader format coverage and richer spreadsheet features belong to the commercial Aspose.Cells product line.
 
@@ -155,7 +158,7 @@ powershell -File run-page-setup-openxml-tests.ps1
 powershell -File run-worksheet-settings-openxml-tests.ps1
 ```
 
-The repository also includes focused test programs for workbook compatibility, page setup, conditional formatting, data validation, chart Open XML, supported features, and golden files under `tests/`.
+The repository also includes focused test programs for workbook compatibility, page setup, conditional formatting, data validation, chart Open XML, supported features, PDF rendering, and golden files under `tests/`. The PDF suites need the same `ffi` extension and Skia native library as PDF export.
 
 ## License
 
